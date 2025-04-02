@@ -56,14 +56,46 @@
             <h2>Sign In</h2>
           </div>
         </div>
-        <form @submit.prevent="handleSignIn" class="sign-in-form">
+        <!-- Sign-In Form -->
+        <form v-if="!showResetPassword" @submit.prevent="handleSignIn" class="sign-in-form">
           <label for="signInEmail">Email:</label>
           <input type="email" id="signInEmail" v-model="signInEmail" required />
           <label for="signInPassword">Password:</label>
           <input type="password" id="signInPassword" v-model="signInPassword" required />
+          <div v-if="signInError" class="error-message">
+            {{ signInError }} <a href="#" @click.prevent="startResetPassword">Forgot Password?</a>
+          </div>
           <button type="submit">Login</button>
           <p class="register-link">
             Don't have an account? <a href="#" @click.prevent="openSignUpFromSignIn">Register</a>
+          </p>
+        </form>
+        <!-- Step 1: Verify Code -->
+        <form v-else-if="!codeVerified" @submit.prevent="verifyResetCode" class="sign-in-form">
+          <p>Enter the verification code sent to your email.</p>
+          <label for="resetCode">Verification Code:</label>
+          <input type="text" id="resetCode" v-model="resetCode" required />
+          <div v-if="resetPasswordError" class="error-message">
+            {{ resetPasswordError }}
+          </div>
+          <button type="submit">Verify Code</button>
+          <p class="register-link">
+            <a href="#" @click.prevent="cancelResetPassword">Cancel</a>
+          </p>
+        </form>
+        <!-- Step 2: Enter New Password -->
+        <form v-else @submit.prevent="handleResetPassword" class="sign-in-form">
+          <p>Enter your new password.</p>
+          <label for="newPassword">New Password:</label>
+          <input type="password" id="newPassword" v-model="newPassword" required />
+          <label for="confirmNewPassword">Confirm New Password:</label>
+          <input type="password" id="confirmNewPassword" v-model="confirmNewPassword" required />
+          <div v-if="resetPasswordError" class="error-message">
+            {{ resetPasswordError }}
+          </div>
+          <button type="submit">Reset Password</button>
+          <p class="register-link">
+            <a href="#" @click.prevent="cancelResetPassword">Cancel</a>
           </p>
         </form>
       </div>
@@ -107,7 +139,7 @@
 
 <script>
 import { ref, onMounted } from 'vue';
-import { signIn, signOut, signUp, confirmSignUp, fetchAuthSession } from 'aws-amplify/auth';
+import { signIn, signOut, signUp, confirmSignUp, fetchAuthSession, resetPassword, confirmResetPassword } from 'aws-amplify/auth';
 import { uploadFile, subscribeToResults, searchLeaderboard } from './js/api';
 import { displayResults, displayLeaderboardResults } from './js/ui';
 
@@ -127,6 +159,13 @@ export default {
     const signInEmail = ref('');
     const signInPassword = ref('');
     const signedInEmail = ref(null);
+    const signInError = ref('');
+    const showResetPassword = ref(false);
+    const resetCode = ref('');
+    const newPassword = ref('');
+    const confirmNewPassword = ref('');
+    const resetPasswordError = ref('');
+    const codeVerified = ref(false); // New state to track code verification
 
     // Sign-up state
     const showSignUp = ref(false);
@@ -137,14 +176,11 @@ export default {
     const verificationCode = ref('');
     const passwordMismatch = ref(false);
 
-    // Updated method to check authentication state
     const checkAuthState = async () => {
       try {
         const session = await fetchAuthSession();
         console.log('Current session:', session);
-        // Check if the user is authenticated by looking for tokens
         if (session.tokens?.idToken) {
-          // Extract the email from signInDetails.loginId
           const email = session.tokens.signInDetails?.loginId;
           if (email) {
             signedInEmail.value = email;
@@ -159,11 +195,10 @@ export default {
         }
       } catch (error) {
         console.log('Error fetching session:', error);
-        signedInEmail.value = null; // Ensure signedInEmail is null if there's an error
+        signedInEmail.value = null;
       }
     };
 
-    // Run the check when the component mounts
     onMounted(() => {
       checkAuthState();
     });
@@ -213,6 +248,8 @@ export default {
     };
 
     const handleSignIn = async () => {
+      signInError.value = '';
+
       try {
         await signIn({
           username: signInEmail.value,
@@ -227,14 +264,95 @@ export default {
         signInPassword.value = '';
       } catch (error) {
         console.error('Sign-in error:', error);
-        // If the error is UserAlreadyAuthenticatedException, check the current user
-        if (error.name === 'UserAlreadyAuthenticatedException') {
-          await checkAuthState(); // Re-check the auth state to update signedInEmail
+        if (error.name === 'NotAuthorizedException' || error.name === 'UserNotFoundException') {
+          signInError.value = 'Invalid email or password.';
+        } else if (error.name === 'UserAlreadyAuthenticatedException') {
+          await checkAuthState();
           showSignIn.value = false;
           signInEmail.value = '';
           signInPassword.value = '';
+        } else {
+          signInError.value = 'An error occurred. Please try again.';
         }
       }
+    };
+
+    const startResetPassword = async () => {
+      try {
+        await resetPassword({ username: signInEmail.value });
+        console.log('Password reset code sent to:', signInEmail.value);
+        showResetPassword.value = true;
+        signInError.value = '';
+      } catch (error) {
+        console.error('Error initiating password reset:', error);
+        signInError.value = 'Failed to send reset code. Please try again.';
+      }
+    };
+
+    const verifyResetCode = async () => {
+      resetPasswordError.value = '';
+
+      try {
+        await confirmResetPassword({
+          username: signInEmail.value,
+          confirmationCode: resetCode.value,
+          newPassword: 'DUMMY_PASSWORD_TO_VERIFY_CODE',
+        });
+      } catch (error) {
+        console.log('Code verification result:', error);
+        if (error.name === 'CodeMismatchException') {
+          resetPasswordError.value = 'Invalid verification code.';
+        } else if (error.name === 'ExpiredCodeException') {
+          resetPasswordError.value = 'Verification code has expired. Please request a new one.';
+        } else if (error.name === 'InvalidPasswordException') {
+          codeVerified.value = true;
+          resetPasswordError.value = '';
+        } else {
+          resetPasswordError.value = 'Failed to verify code. Please try again.';
+        }
+      }
+    };
+
+    const handleResetPassword = async () => {
+      resetPasswordError.value = '';
+
+      if (newPassword.value !== confirmNewPassword.value) {
+        resetPasswordError.value = 'Passwords do not match.';
+        return;
+      }
+
+      try {
+        await confirmResetPassword({
+          username: signInEmail.value,
+          confirmationCode: resetCode.value,
+          newPassword: newPassword.value,
+        });
+        console.log('Password reset successful for:', signInEmail.value);
+        showResetPassword.value = false;
+        codeVerified.value = false;
+        resetCode.value = '';
+        newPassword.value = '';
+        confirmNewPassword.value = '';
+        signInPassword.value = '';
+      } catch (error) {
+        console.error('Error resetting password:', error);
+        if (error.name === 'CodeMismatchException') {
+          resetPasswordError.value = 'Invalid verification code.';
+        } else if (error.name === 'ExpiredCodeException') {
+          resetPasswordError.value = 'Verification code has expired. Please request a new one.';
+        } else {
+          resetPasswordError.value = 'Failed to reset password. Please try again.';
+        }
+      }
+    };
+
+    const cancelResetPassword = () => {
+      showResetPassword.value = false;
+      codeVerified.value = false;
+      resetCode.value = '';
+      newPassword.value = '';
+      confirmNewPassword.value = '';
+      resetPasswordError.value = '';
     };
 
     const handleSignOut = async () => {
@@ -250,13 +368,11 @@ export default {
     };
 
     const handleSignUp = async () => {
-      // Reset password mismatch state
       passwordMismatch.value = false;
 
-      // Check if passwords match
       if (signUpPassword.value !== signUpConfirmPassword.value) {
         passwordMismatch.value = true;
-        return; // Prevent form submission
+        return;
       }
 
       try {
@@ -270,7 +386,7 @@ export default {
           },
         });
         console.log('Sign-up successful, verification code sent to:', signUpEmail.value);
-        showVerification.value = true; // Show verification form
+        showVerification.value = true;
       } catch (error) {
         console.error('Sign-up error:', error);
       }
@@ -283,14 +399,12 @@ export default {
           confirmationCode: verificationCode.value,
         });
         console.log('Verification successful for:', signUpEmail.value);
-        // Reset state and close dialog
         showSignUp.value = false;
         showVerification.value = false;
         signUpEmail.value = '';
         signUpPassword.value = '';
         signUpConfirmPassword.value = '';
         verificationCode.value = '';
-        // After verification, the user is signed in, so update the state
         await checkAuthState();
       } catch (error) {
         console.error('Verification error:', error);
@@ -298,20 +412,25 @@ export default {
     };
 
     const openSignUpFromSignIn = () => {
-      showSignIn.value = false; // Close sign-in dialog
-      showSignUp.value = true; // Open sign-up dialog
-      // Reset sign-up form
+      showSignIn.value = false;
+      showSignUp.value = true;
       signUpEmail.value = '';
       signUpPassword.value = '';
       signUpConfirmPassword.value = '';
       showVerification.value = false;
       verificationCode.value = '';
+      signInError.value = '';
+      showResetPassword.value = false;
+      codeVerified.value = false;
+      resetCode.value = '';
+      newPassword.value = '';
+      confirmNewPassword.value = '';
+      resetPasswordError.value = '';
     };
 
     const openSignInFromSignUp = () => {
-      showSignUp.value = false; // Close sign-up dialog
-      showSignIn.value = true; // Open sign-in dialog
-      // Reset sign-in form
+      showSignUp.value = false;
+      showSignIn.value = true;
       signInEmail.value = '';
       signInPassword.value = '';
     };
@@ -321,13 +440,19 @@ export default {
         showSignIn.value = false;
         showSignUp.value = false;
         showVerification.value = false;
-        // Reset forms
         signInEmail.value = '';
         signInPassword.value = '';
         signUpEmail.value = '';
         signUpPassword.value = '';
         signUpConfirmPassword.value = '';
         verificationCode.value = '';
+        signInError.value = '';
+        showResetPassword.value = false;
+        codeVerified.value = false;
+        resetCode.value = '';
+        newPassword.value = '';
+        confirmNewPassword.value = '';
+        resetPasswordError.value = '';
       }
     };
 
@@ -342,6 +467,13 @@ export default {
       signInEmail,
       signInPassword,
       signedInEmail,
+      signInError,
+      showResetPassword,
+      resetCode,
+      newPassword,
+      confirmNewPassword,
+      resetPasswordError,
+      codeVerified,
       showSignUp,
       signUpEmail,
       signUpPassword,
@@ -356,6 +488,10 @@ export default {
       handleSignOut,
       handleSignUp,
       handleVerify,
+      startResetPassword,
+      verifyResetCode,
+      handleResetPassword,
+      cancelResetPassword,
       openSignUpFromSignIn,
       openSignInFromSignUp,
       handleOverlayClick,
@@ -371,5 +507,14 @@ export default {
   font-size: 0.9em;
   margin-bottom: 10px;
   align-self: flex-start;
+}
+.error-message a {
+  color: #e0e0e0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.error-message a:hover {
+  color: #fff;
 }
 </style>
