@@ -9,16 +9,17 @@
       <div class="auth-buttons">
         <template v-if="!signedInEmail">
           <button class="auth-btn" @click="showSignIn = true">Login</button>
-          <button class="auth-btn">Register</button>
+          <button class="auth-btn" @click="showSignUp = true">Register</button>
         </template>
         <template v-else>
           <span class="signed-in-text">Signed in as: {{ signedInEmail }}</span>
+          <button class="auth-btn" @click="handleSignOut">Sign Out</button>
         </template>
       </div>
     </header>
 
     <!-- Main Content -->
-    <main :class="{ 'dimmed': showSignIn }">
+    <main :class="{ 'dimmed': showSignIn || showSignUp }">
       <h1>Word Count Uploader</h1>
       <p>{{ description }}</p>
 
@@ -62,8 +63,37 @@
           <input type="password" id="signInPassword" v-model="signInPassword" required />
           <button type="submit">Login</button>
           <p class="register-link">
-            Don't have an account? <a href="#" @click.prevent="showSignIn = false">Register</a>
+            Don't have an account? <a href="#" @click.prevent="openSignUpFromSignIn">Register</a>
           </p>
+        </form>
+      </div>
+    </div>
+
+    <!-- Sign-Up Dialog -->
+    <div v-if="showSignUp" class="dialog-overlay" @click="handleOverlayClick">
+      <div class="sign-in-dialog">
+        <div class="dialog-header">
+          <div class="dialog-logo">
+            <span class="logo-sub">MPM</span>
+            <span class="logo-main">WCU</span>
+            <h2>Sign Up</h2>
+          </div>
+        </div>
+        <form v-if="!showVerification" @submit.prevent="handleSignUp" class="sign-in-form">
+          <label for="signUpEmail">Email:</label>
+          <input type="email" id="signUpEmail" v-model="signUpEmail" required />
+          <label for="signUpPassword">Password:</label>
+          <input type="password" id="signUpPassword" v-model="signUpPassword" required />
+          <button type="submit">Register</button>
+          <p class="register-link">
+            Already have an account? <a href="#" @click.prevent="openSignInFromSignUp">Login</a>
+          </p>
+        </form>
+        <form v-else @submit.prevent="handleVerify" class="sign-in-form">
+          <p>Check your email for a verification code.</p>
+          <label for="verificationCode">Verification Code:</label>
+          <input type="text" id="verificationCode" v-model="verificationCode" required />
+          <button type="submit">Verify</button>
         </form>
       </div>
     </div>
@@ -72,7 +102,7 @@
 
 <script>
 import { ref } from 'vue';
-import { signIn } from 'aws-amplify/auth';
+import { signIn, signOut, signUp, confirmSignUp, fetchAuthSession } from 'aws-amplify/auth';
 import { uploadFile, subscribeToResults, searchLeaderboard } from './js/api';
 import { displayResults, displayLeaderboardResults } from './js/ui';
 
@@ -92,6 +122,13 @@ export default {
     const signInEmail = ref('');
     const signInPassword = ref('');
     const signedInEmail = ref(null);
+
+    // Sign-up state
+    const showSignUp = ref(false);
+    const signUpEmail = ref('');
+    const signUpPassword = ref('');
+    const showVerification = ref(false);
+    const verificationCode = ref('');
 
     const setMode = (newMode) => {
       mode.value = newMode;
@@ -139,11 +176,13 @@ export default {
 
     const handleSignIn = async () => {
       try {
-        const { user } = await signIn({
+        await signIn({
           username: signInEmail.value,
           password: signInPassword.value,
         });
-        console.log('Sign-in successful:', user);
+        console.log('Sign-in successful', signInEmail.value);
+        const session = await fetchAuthSession();
+        console.log('Authenticated session:', session);
         signedInEmail.value = signInEmail.value;
         showSignIn.value = false;
         signInEmail.value = '';
@@ -153,10 +192,83 @@ export default {
       }
     };
 
+    const handleSignOut = async () => {
+      try {
+        await signOut();
+        console.log('Sign-out successful');
+        const session = await fetchAuthSession();
+        console.log('Guest session:', session);
+        signedInEmail.value = null;
+      } catch (error) {
+        console.error('Sign-out error:', error);
+      }
+    };
+
+    const handleSignUp = async () => {
+      try {
+        await signUp({
+          username: signUpEmail.value,
+          password: signUpPassword.value,
+          options: {
+            userAttributes: {
+              email: signUpEmail.value,
+            },
+          },
+        });
+        console.log('Sign-up successful, verification code sent to:', signUpEmail.value);
+        showVerification.value = true; // Show verification form
+      } catch (error) {
+        console.error('Sign-up error:', error);
+      }
+    };
+
+    const handleVerify = async () => {
+      try {
+        await confirmSignUp({
+          username: signUpEmail.value,
+          confirmationCode: verificationCode.value,
+        });
+        console.log('Verification successful for:', signUpEmail.value);
+        // Reset state and close dialog
+        showSignUp.value = false;
+        showVerification.value = false;
+        signUpEmail.value = '';
+        signUpPassword.value = '';
+        verificationCode.value = '';
+      } catch (error) {
+        console.error('Verification error:', error);
+      }
+    };
+
+    const openSignUpFromSignIn = () => {
+      showSignIn.value = false; // Close sign-in dialog
+      showSignUp.value = true; // Open sign-up dialog
+      // Reset sign-up form
+      signUpEmail.value = '';
+      signUpPassword.value = '';
+      showVerification.value = false;
+      verificationCode.value = '';
+    };
+
+    const openSignInFromSignUp = () => {
+      showSignUp.value = false; // Close sign-up dialog
+      showSignIn.value = true; // Open sign-in dialog
+      // Reset sign-in form
+      signInEmail.value = '';
+      signInPassword.value = '';
+    };
+
     const handleOverlayClick = (event) => {
-      // Check if the click target is the overlay itself (not the dialog)
       if (event.target.classList.contains('dialog-overlay')) {
-        showSignIn.value = false; // Close the popup
+        showSignIn.value = false;
+        showSignUp.value = false;
+        showVerification.value = false;
+        // Reset forms
+        signInEmail.value = '';
+        signInPassword.value = '';
+        signUpEmail.value = '';
+        signUpPassword.value = '';
+        verificationCode.value = '';
       }
     };
 
@@ -171,10 +283,20 @@ export default {
       signInEmail,
       signInPassword,
       signedInEmail,
+      showSignUp,
+      signUpEmail,
+      signUpPassword,
+      showVerification,
+      verificationCode,
       setMode,
       handleUpload,
       handleSearch,
       handleSignIn,
+      handleSignOut,
+      handleSignUp,
+      handleVerify,
+      openSignUpFromSignIn,
+      openSignInFromSignUp,
       handleOverlayClick,
     };
   },
@@ -182,5 +304,5 @@ export default {
 </script>
 
 <style scoped>
-/* Component-specific styles can go here if needed */
+/* Existing styles remain unchanged */
 </style>
