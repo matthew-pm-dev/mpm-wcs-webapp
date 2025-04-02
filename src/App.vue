@@ -84,6 +84,11 @@
           <input type="email" id="signUpEmail" v-model="signUpEmail" required />
           <label for="signUpPassword">Password:</label>
           <input type="password" id="signUpPassword" v-model="signUpPassword" required />
+          <label for="signUpConfirmPassword">Confirm Password:</label>
+          <input type="password" id="signUpConfirmPassword" v-model="signUpConfirmPassword" required />
+          <div v-if="passwordMismatch" class="error-message">
+            Passwords do not match.
+          </div>
           <button type="submit">Register</button>
           <p class="register-link">
             Already have an account? <a href="#" @click.prevent="openSignInFromSignUp">Login</a>
@@ -101,7 +106,7 @@
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { signIn, signOut, signUp, confirmSignUp, fetchAuthSession } from 'aws-amplify/auth';
 import { uploadFile, subscribeToResults, searchLeaderboard } from './js/api';
 import { displayResults, displayLeaderboardResults } from './js/ui';
@@ -127,8 +132,41 @@ export default {
     const showSignUp = ref(false);
     const signUpEmail = ref('');
     const signUpPassword = ref('');
+    const signUpConfirmPassword = ref('');
     const showVerification = ref(false);
     const verificationCode = ref('');
+    const passwordMismatch = ref(false);
+
+    // Updated method to check authentication state
+    const checkAuthState = async () => {
+      try {
+        const session = await fetchAuthSession();
+        console.log('Current session:', session);
+        // Check if the user is authenticated by looking for tokens
+        if (session.tokens?.idToken) {
+          // Extract the email from signInDetails.loginId
+          const email = session.tokens.signInDetails?.loginId;
+          if (email) {
+            signedInEmail.value = email;
+            console.log('User is authenticated with email:', email);
+          } else {
+            console.log('No email found in signInDetails');
+            signedInEmail.value = null;
+          }
+        } else {
+          console.log('No authenticated session found');
+          signedInEmail.value = null;
+        }
+      } catch (error) {
+        console.log('Error fetching session:', error);
+        signedInEmail.value = null; // Ensure signedInEmail is null if there's an error
+      }
+    };
+
+    // Run the check when the component mounts
+    onMounted(() => {
+      checkAuthState();
+    });
 
     const setMode = (newMode) => {
       mode.value = newMode;
@@ -189,6 +227,13 @@ export default {
         signInPassword.value = '';
       } catch (error) {
         console.error('Sign-in error:', error);
+        // If the error is UserAlreadyAuthenticatedException, check the current user
+        if (error.name === 'UserAlreadyAuthenticatedException') {
+          await checkAuthState(); // Re-check the auth state to update signedInEmail
+          showSignIn.value = false;
+          signInEmail.value = '';
+          signInPassword.value = '';
+        }
       }
     };
 
@@ -205,6 +250,15 @@ export default {
     };
 
     const handleSignUp = async () => {
+      // Reset password mismatch state
+      passwordMismatch.value = false;
+
+      // Check if passwords match
+      if (signUpPassword.value !== signUpConfirmPassword.value) {
+        passwordMismatch.value = true;
+        return; // Prevent form submission
+      }
+
       try {
         await signUp({
           username: signUpEmail.value,
@@ -234,7 +288,10 @@ export default {
         showVerification.value = false;
         signUpEmail.value = '';
         signUpPassword.value = '';
+        signUpConfirmPassword.value = '';
         verificationCode.value = '';
+        // After verification, the user is signed in, so update the state
+        await checkAuthState();
       } catch (error) {
         console.error('Verification error:', error);
       }
@@ -246,6 +303,7 @@ export default {
       // Reset sign-up form
       signUpEmail.value = '';
       signUpPassword.value = '';
+      signUpConfirmPassword.value = '';
       showVerification.value = false;
       verificationCode.value = '';
     };
@@ -268,6 +326,7 @@ export default {
         signInPassword.value = '';
         signUpEmail.value = '';
         signUpPassword.value = '';
+        signUpConfirmPassword.value = '';
         verificationCode.value = '';
       }
     };
@@ -286,6 +345,8 @@ export default {
       showSignUp,
       signUpEmail,
       signUpPassword,
+      signUpConfirmPassword,
+      passwordMismatch,
       showVerification,
       verificationCode,
       setMode,
@@ -305,4 +366,10 @@ export default {
 
 <style scoped>
 /* Existing styles remain unchanged */
+.error-message {
+  color: #ff5555;
+  font-size: 0.9em;
+  margin-bottom: 10px;
+  align-self: flex-start;
+}
 </style>

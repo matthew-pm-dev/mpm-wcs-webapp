@@ -74,6 +74,26 @@ input[type="text"] {
     color: #e0e0e0;
 }
 
+/* Override autofill styles for search form input in WebKit browsers */
+input[type="text"]:-webkit-autofill,
+input[type="text"]:-webkit-autofill:hover,
+input[type="text"]:-webkit-autofill:focus,
+input[type="text"]:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #3a353c inset !important; /* Match your background color */
+    -webkit-text-fill-color: #e0e0e0 !important; /* Match your text color */
+    border: 1px solid #4a4550 !important; /* Match your border color */
+    border-radius: 5px !important; /* Match your border radius */
+}
+
+/* Ensure Firefox and other browsers respect the background color for search form input */
+input[type="text"]:-moz-autofill,
+input[type="text"]:autofill {
+    background-color: #3a353c !important; /* Match your background color */
+    color: #e0e0e0 !important; /* Match your text color */
+    border: 1px solid #4a4550 !important; /* Match your border color */
+    border-radius: 5px !important; /* Match your border radius */
+}
+
 button {
     background-color: #4a4550;
     color: #fff;
@@ -256,6 +276,26 @@ th {
     align-self: center;
 }
 
+/* Override autofill styles for WebKit browsers (Chrome, Safari, Edge) */
+.sign-in-form input:-webkit-autofill,
+.sign-in-form input:-webkit-autofill:hover,
+.sign-in-form input:-webkit-autofill:focus,
+.sign-in-form input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #3a353c inset !important; /* Match your background color */
+    -webkit-text-fill-color: #e0e0e0 !important; /* Match your text color */
+    border: 1px solid #4a4550 !important; /* Match your border color */
+    border-radius: 5px !important; /* Match your border radius */
+}
+
+/* Ensure Firefox and other browsers also respect the background color */
+.sign-in-form input:-moz-autofill,
+.sign-in-form input:autofill {
+    background-color: #3a353c !important; /* Match your background color */
+    color: #e0e0e0 !important; /* Match your text color */
+    border: 1px solid #4a4550 !important; /* Match your border color */
+    border-radius: 5px !important; /* Match your border radius */
+}
+
 .sign-in-form button {
     width: 100px; /* Approximate: 30% wider than "Register" text */
     background-color: #4a4550;
@@ -300,3 +340,10 @@ th {
     font-size: 1em;
     line-height: normal;
 }
+
+.error-message {
+    color: #ff5555;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+    align-self: flex-start;
+  }
