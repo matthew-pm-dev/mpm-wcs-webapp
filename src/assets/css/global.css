@@ -1,0 +1,109 @@
+/* src/assets/css/global.css */
+:root {
+    /* Define color variables */
+    --background-dark: #1c1a1d;
+    --background-form: #2a272c;
+    --background-input: #3a353c;
+    --background-button: #4a4550;
+    --background-button-hover: #5a5362;
+    --background-button-active: #6a6070;
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0a8b0;
+    --text-error: #ff5555;
+    --border-color: #4a4550;
+  }
+  
+  body {
+    background-color: var(--background-dark);
+    color: var(--text-primary);
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    box-sizing: border-box;
+  }
+  
+  html {
+    height: 100%;
+  }
+  
+  /* Typography */
+  h1 {
+    font-size: 2.5em;
+    margin-bottom: 0.5em;
+  }
+  
+  h2 {
+    font-size: 1.5em;
+    margin-top: 20px;
+    margin-bottom: 10px;
+  }
+  
+  p {
+    font-size: 1.2em;
+    margin-bottom: 1.5em;
+  }
+  
+  /* Form styles */
+  form {
+    background-color: var(--background-form);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Input styles */
+  input {
+    caret-color: var(--text-primary);
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    background-color: var(--background-input);
+    color: var(--text-primary);
+    box-sizing: border-box;
+  }
+  
+  /* Override autofill styles for WebKit browsers */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px var(--background-input) inset !important;
+    -webkit-text-fill-color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 5px !important;
+  }
+  
+  /* Ensure Firefox and other browsers respect the background color */
+  input:-moz-autofill,
+  input:autofill {
+    background-color: var(--background-input) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 5px !important;
+  }
+  
+  /* Button styles */
+  button {
+    background-color: var(--background-button);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+  }
+  
+  button:hover {
+    background-color: var(--background-button-hover);
+  }
+  
+  /* Error message styles */
+  .error-message {
+    color: var(--text-error);
+    font-size: 0.9em;
+    margin-bottom: 10px;
+  }

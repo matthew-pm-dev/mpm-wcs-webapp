@@ -1,8 +1,10 @@
 import { createApp } from 'vue';
-import App from '../App.vue';
+import App from './App.vue';
 import { Amplify } from 'aws-amplify';
 import { fetchAuthSession } from 'aws-amplify/auth';
-import { APPSYNC_ENDPOINT, WS_ENDPOINT, IDENTITY_POOL_ID, USER_POOL_ID, USER_POOL_APP_CLIENT_ID } from './config';
+import { APPSYNC_ENDPOINT, WS_ENDPOINT, IDENTITY_POOL_ID, USER_POOL_ID, USER_POOL_APP_CLIENT_ID } from './services/config.js';
+import './assets/css/global.css';
+
 
 // Configure Amplify
 Amplify.configure({

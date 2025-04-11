@@ -31,7 +31,6 @@ export async function getPresignedUrl(file) {
     return { presignedUrl: response.data.generatePresignedUrl.presignedUrl, s3Filename: uniqueKey };
 }
 
-// Rest of the code...
 export async function uploadFile(file, updateStatus) {
     updateStatus('Generating unique key...');
     try {
@@ -62,7 +61,7 @@ export async function uploadFile(file, updateStatus) {
     }
 }
 
-export function subscribeToResults(s3Filename, originalFilename, updateStatus, displayResults) {
+export function subscribeToResults(s3Filename, originalFilename, updateStatus, callback) {
     const subscription = client
         .graphql({
             query: subscriptionQuery,
@@ -72,7 +71,7 @@ export function subscribeToResults(s3Filename, originalFilename, updateStatus, d
             next: ({ data }) => {
                 const result = data.onProcessingComplete;
                 console.log('Subscription data:', result);
-                displayResults(result);
+                callback(result); // Pass the raw result directly
                 subscription.unsubscribe();
             },
             error: (error) => {
@@ -100,7 +99,7 @@ export async function searchLeaderboard(word, updateStatus) {
             throw new Error(`GraphQL errors: ${JSON.stringify(response.errors)}`);
         }
 
-        return response.data.getTopWordCounts;
+        return response.data.getTopWordCounts; // Return the raw data directly
     } catch (error) {
         updateStatus('Error: Check console for details');
         console.error('SearchLeaderboard error:', error);
