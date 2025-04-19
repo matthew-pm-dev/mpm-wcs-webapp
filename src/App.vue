@@ -1,22 +1,21 @@
 <template>
   <div>
     <TopBar
-      :signed-in-email="signedInEmail"
+      :signed-in-username="signedInUsername"
       @open-sign-in="showSignIn = true"
       @open-sign-up="showSignUp = true"
-      @update-signed-in-email="updateSignedInEmail"
+      @update-signed-in-username="updateSignedInUsername"
     />
     <MainContent :is-dialog-open="showSignIn || showSignUp" />
     <SignInDialog
       :show-sign-in="showSignIn"
       @close-sign-in="showSignIn = false"
-      @update-signed-in-email="updateSignedInEmail"
+      @update-signed-in-username="updateSignedInUsername"
       @open-sign-up-from-sign-in="openSignUpFromSignIn"
     />
     <SignUpDialog
       :show-sign-up="showSignUp"
       @close-sign-up="showSignUp = false"
-      @update-signed-in-email="updateSignedInEmail"
       @open-sign-in-from-sign-up="openSignInFromSignUp"
     />
   </div>
@@ -39,7 +38,7 @@ export default {
     SignUpDialog,
   },
   setup() {
-    const signedInEmail = ref(null);
+    const signedInUsername = ref(null);
     const showSignIn = ref(false);
     const showSignUp = ref(false);
 
@@ -48,21 +47,21 @@ export default {
         const session = await fetchAuthSession();
         console.log('Current session:', session);
         if (session.tokens?.idToken) {
-          const email = session.tokens.signInDetails?.loginId;
-          if (email) {
-            signedInEmail.value = email;
-            console.log('User is authenticated with email:', email);
+          const username = session.tokens.idToken.payload['cognito:username'];
+          if (username) {
+            signedInUsername.value = username;
+            console.log('User is authenticated with username:', username);
           } else {
-            console.log('No email found in signInDetails');
-            signedInEmail.value = null;
+            console.log('No username found in idToken payload');
+            signedInUsername.value = null;
           }
         } else {
           console.log('No authenticated session found');
-          signedInEmail.value = null;
+          signedInUsername.value = null;
         }
       } catch (error) {
         console.log('Error fetching session:', error);
-        signedInEmail.value = null;
+        signedInUsername.value = null;
       }
     };
 
@@ -70,8 +69,8 @@ export default {
       checkAuthState();
     });
 
-    const updateSignedInEmail = (email) => {
-      signedInEmail.value = email;
+    const updateSignedInUsername = (username) => {
+      signedInUsername.value = username;
     };
 
     const openSignUpFromSignIn = () => {
@@ -85,10 +84,10 @@ export default {
     };
 
     return {
-      signedInEmail,
+      signedInUsername,
       showSignIn,
       showSignUp,
-      updateSignedInEmail,
+      updateSignedInUsername,
       openSignUpFromSignIn,
       openSignInFromSignUp,
     };

@@ -3,8 +3,8 @@ import gql from 'graphql-tag';
 export const APPSYNC_ENDPOINT = 'https://zu342ruj2feipo7jf724for7um.appsync-api.us-east-1.amazonaws.com/graphql';
 export const WS_ENDPOINT = 'wss://zu342ruj2feipo7jf724for7um.appsync-realtime-api.us-east-1.amazonaws.com/graphql';
 export const IDENTITY_POOL_ID = 'us-east-1:57284626-3bd7-4082-9707-69d1f1829f04';
-export const USER_POOL_ID = 'us-east-1_AkHKurAth';
-export const USER_POOL_APP_CLIENT_ID = 'dicb049i5gr9sl2degob1f5ha';
+export const USER_POOL_ID = 'us-east-1_yZQjPS2bb';
+export const USER_POOL_APP_CLIENT_ID = '60bci4bg482ih64aok2lqclu6p';
 
 export const generatePresignedUrlQuery = gql`
     query GeneratePresignedUrl($key: String!, $originalFilename: String!, $contentType: String!) {

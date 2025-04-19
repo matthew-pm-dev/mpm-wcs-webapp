@@ -5,8 +5,8 @@
       <span class="logo-main">WCU</span>
     </div>
     <div class="user-info">
-      <span v-if="signedInEmail">{{ signedInEmail }}</span>
-      <button v-if="signedInEmail" class="auth-btn" @click="handleSignOut">Sign Out</button>
+      <span v-if="signedInUsername">Signed in as: {{ signedInUsername }}</span>
+      <button v-if="signedInUsername" class="auth-btn" @click="handleSignOut">Sign Out</button>
       <template v-else>
         <button class="auth-btn" @click="$emit('open-sign-in')">Login</button>
         <button class="auth-btn" @click="$emit('open-sign-up')">Register</button>
@@ -21,7 +21,7 @@ import { signOut, fetchAuthSession } from 'aws-amplify/auth';
 export default {
   name: 'TopBar',
   props: {
-    signedInEmail: {
+    signedInUsername: {
       type: String,
       default: null,
     },
@@ -32,7 +32,7 @@ export default {
         await signOut();
         const session = await fetchAuthSession();
         console.log('Sign-out successful, session:', session);
-        this.$emit('update-signed-in-email', null);
+        this.$emit('update-signed-in-username', null);
       } catch (error) {
         console.error('Sign-out error:', error);
       }

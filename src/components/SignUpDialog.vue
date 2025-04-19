@@ -6,6 +6,8 @@
   >
     <template #form-content>
       <form v-if="!showVerification" @submit.prevent="handleSignUp" class="sign-in-form">
+        <label for="signUpUsername">Username:</label>
+        <input type="text" id="signUpUsername" v-model="signUpUsername" required />
         <label for="signUpEmail">Email:</label>
         <input type="email" id="signUpEmail" v-model="signUpEmail" required />
         <label for="signUpPassword">Password:</label>
@@ -47,6 +49,7 @@ export default {
     },
   },
   setup(props, { emit }) {
+    const signUpUsername = ref('');
     const signUpEmail = ref('');
     const signUpPassword = ref('');
     const signUpConfirmPassword = ref('');
@@ -64,7 +67,7 @@ export default {
 
       try {
         await signUp({
-          username: signUpEmail.value,
+          username: signUpUsername.value,
           password: signUpPassword.value,
           options: {
             userAttributes: {
@@ -82,10 +85,10 @@ export default {
     const handleVerify = async () => {
       try {
         await confirmSignUp({
-          username: signUpEmail.value,
+          username: signUpUsername.value,
           confirmationCode: verificationCode.value,
         });
-        console.log('Verification successful for:', signUpEmail.value);
+        console.log('Verification successful for:', signUpUsername.value);
         emit('close-sign-up');
         emit('update-signed-in-email', signUpEmail.value);
         clearForm();
@@ -95,6 +98,7 @@ export default {
     };
 
     const clearForm = () => {
+      signUpUsername.value = '';
       signUpEmail.value = '';
       signUpPassword.value = '';
       signUpConfirmPassword.value = '';
@@ -109,6 +113,7 @@ export default {
     };
 
     return {
+      signUpUsername,
       signUpEmail,
       signUpPassword,
       signUpConfirmPassword,

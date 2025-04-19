@@ -7,8 +7,8 @@
     <template #form-content>
       <!-- Sign-In Form -->
       <form v-if="!showResetPassword" @submit.prevent="handleSignIn" class="sign-in-form">
-        <label for="signInEmail">Email:</label>
-        <input type="email" id="signInEmail" v-model="signInEmail" required />
+        <label for="signInUsernameOrEmail">Username or Email:</label>
+        <input type="text" id="signInUsernameOrEmail" v-model="signInUsernameOrEmail" required />
         <label for="signInPassword">Password:</label>
         <input type="password" id="signInPassword" v-model="signInPassword" required />
         <div v-if="signInError" class="error-message">
@@ -68,7 +68,7 @@ export default {
     },
   },
   setup(props, { emit }) {
-    const signInEmail = ref('');
+    const signInUsernameOrEmail = ref('');
     const signInPassword = ref('');
     const signInError = ref('');
     const showResetPassword = ref(false);
@@ -83,23 +83,26 @@ export default {
 
       try {
         await signIn({
-          username: signInEmail.value,
+          username: signInUsernameOrEmail.value,
           password: signInPassword.value,
         });
-        console.log('Sign-in successful', signInEmail.value);
+        console.log('Sign-in successful', signInUsernameOrEmail.value);
         const session = await fetchAuthSession();
         console.log('Authenticated session:', session);
-        emit('update-signed-in-email', signInEmail.value);
+        console.log('idToken payload:', session.tokens.idToken.payload);
+        const username = session.tokens?.idToken?.payload['cognito:username'];
+        emit('update-signed-in-username', username);
         emit('close-sign-in');
         clearForm();
       } catch (error) {
         console.error('Sign-in error:', error);
         if (error.name === 'NotAuthorizedException' || error.name === 'UserNotFoundException') {
-          signInError.value = 'Invalid email or password.';
+          signInError.value = 'Invalid username/email or password.';
         } else if (error.name === 'UserAlreadyAuthenticatedException') {
           const session = await fetchAuthSession();
-          const email = session.tokens?.signInDetails?.loginId || null;
-          emit('update-signed-in-email', email);
+          console.log('Already authenticated, idToken payload:', session.tokens.idToken.payload);
+          const username = session.tokens?.idToken?.payload['cognito:username'];
+          emit('update-signed-in-username', username);
           emit('close-sign-in');
           clearForm();
         } else {
@@ -110,8 +113,8 @@ export default {
 
     const startResetPassword = async () => {
       try {
-        await resetPassword({ username: signInEmail.value });
-        console.log('Password reset code sent to:', signInEmail.value);
+        await resetPassword({ username: signInUsernameOrEmail.value });
+        console.log('Password reset code sent to:', signInUsernameOrEmail.value);
         showResetPassword.value = true;
         signInError.value = '';
       } catch (error) {
@@ -125,7 +128,7 @@ export default {
 
       try {
         await confirmResetPassword({
-          username: signInEmail.value,
+          username: signInUsernameOrEmail.value,
           confirmationCode: resetCode.value,
           newPassword: 'DUMMY_PASSWORD_TO_VERIFY_CODE',
         });
@@ -154,11 +157,11 @@ export default {
 
       try {
         await confirmResetPassword({
-          username: signInEmail.value,
+          username: signInUsernameOrEmail.value,
           confirmationCode: resetCode.value,
           newPassword: newPassword.value,
         });
-        console.log('Password reset successful for:', signInEmail.value);
+        console.log('Password reset successful for:', signInUsernameOrEmail.value);
         showResetPassword.value = false;
         codeVerified.value = false;
         emit('close-sign-in');
@@ -185,7 +188,7 @@ export default {
     };
 
     const clearForm = () => {
-      signInEmail.value = '';
+      signInUsernameOrEmail.value = '';
       signInPassword.value = '';
       signInError.value = '';
       showResetPassword.value = false;
@@ -202,7 +205,7 @@ export default {
     };
 
     return {
-      signInEmail,
+      signInUsernameOrEmail,
       signInPassword,
       signInError,
       showResetPassword,
