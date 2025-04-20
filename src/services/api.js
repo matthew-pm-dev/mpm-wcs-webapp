@@ -9,7 +9,7 @@ const client = generateClient({
 });
 
 // Generate a presigned URL for S3 upload
-export async function getPresignedUrl(file) {
+export async function getPresignedUrl(file, username) {
     const uniqueKey = `uploads/${window.crypto.randomUUID()}-${file.name}`;
     const contentType = file.type || 'application/octet-stream';
 
@@ -17,8 +17,9 @@ export async function getPresignedUrl(file) {
         query: generatePresignedUrlQuery,
         variables: {
             key: uniqueKey,
-            originalFilename: file.name,
             contentType: contentType,
+            originalFilename: file.name,
+            username: username || 'anonymous',
         },
     });
 
@@ -31,10 +32,10 @@ export async function getPresignedUrl(file) {
     return { presignedUrl: response.data.generatePresignedUrl.presignedUrl, s3Filename: uniqueKey };
 }
 
-export async function uploadFile(file, updateStatus) {
+export async function uploadFile(file, username, updateStatus) {
     updateStatus('Generating unique key...');
     try {
-        const { presignedUrl, s3Filename } = await getPresignedUrl(file);
+        const { presignedUrl, s3Filename } = await getPresignedUrl(file, username);
         updateStatus('Uploading to S3...');
 
         const contentType = file.type || 'application/octet-stream';

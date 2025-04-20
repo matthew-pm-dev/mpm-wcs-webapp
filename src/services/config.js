@@ -7,8 +7,8 @@ export const USER_POOL_ID = 'us-east-1_yZQjPS2bb';
 export const USER_POOL_APP_CLIENT_ID = '60bci4bg482ih64aok2lqclu6p';
 
 export const generatePresignedUrlQuery = gql`
-    query GeneratePresignedUrl($key: String!, $originalFilename: String!, $contentType: String!) {
-        generatePresignedUrl(key: $key, originalFilename: $originalFilename, contentType: $contentType) {
+    query GeneratePresignedUrl($key: String!, $contentType: String!, $originalFilename: String!, $username: String!) {
+        generatePresignedUrl(key: $key, contentType: $contentType, originalFilename: $originalFilename, username: $username) {
             presignedUrl
         }
     }
@@ -30,6 +30,7 @@ export const getTopWordCountsQuery = gql`
             word
             count
             originalFilename
+            username
         }
     }
 `;

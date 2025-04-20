@@ -6,7 +6,10 @@
       @open-sign-up="showSignUp = true"
       @update-signed-in-username="updateSignedInUsername"
     />
-    <MainContent :is-dialog-open="showSignIn || showSignUp" />
+    <MainContent
+      :is-dialog-open="showSignIn || showSignUp"
+      :signed-in-username="signedInUsername"
+    />
     <SignInDialog
       :show-sign-in="showSignIn"
       @close-sign-in="showSignIn = false"
@@ -33,7 +36,7 @@ export default {
   name: 'App',
   components: {
     TopBar,
-    MainContent,
+    MainContent, 
     SignInDialog,
     SignUpDialog,
   },
