@@ -34,3 +34,15 @@ export const getTopWordCountsQuery = gql`
         }
     }
 `;
+
+export const getMyUploadsQuery = gql`
+    query GetMyUploads {
+        getMyUploads {
+            s3Filename
+            originalFilename
+            word
+            count
+            uploadDate
+        }
+    }
+`;

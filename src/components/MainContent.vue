@@ -4,10 +4,11 @@
     <h1>Word Count Uploader</h1>
     <p>{{ description }}</p>
 
-    <!-- Mode toggle: Switch between upload and search -->
+    <!-- Mode toggle: Switch between upload, search, and my files -->
     <div class="mode-toggle">
       <button :class="{ active: mode === 'upload' }" @click="setMode('upload')">Upload File</button>
       <button :class="{ active: mode === 'search' }" @click="setMode('search')">Search Word</button>
+      <button v-if="signedInUsername" :class="{ active: mode === 'myfiles' }" @click="setMode('myfiles')">My Files</button>
     </div>
 
     <!-- Upload form: File submission interface -->
@@ -21,6 +22,26 @@
       <input type="text" v-model="searchWord" placeholder="Enter a word (e.g., hello)" required />
       <button type="submit">Search Leaderboard</button>
     </form>
+
+    <!-- My Files: Table of user's uploads -->
+    <div v-if="mode === 'myfiles'" class="form-container">
+      <div v-if="myFilesError" class="error-message">{{ myFilesError }}</div>
+      <table v-else-if="myFiles && myFiles.length" class="myfiles-table">
+        <thead>
+          <tr>
+            <th>Filename</th>
+            <th>Upload Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="file in myFiles" :key="file.s3Filename">
+            <td>{{ file.originalFilename }}</td>
+            <td>{{ file.uploadDate }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div v-else>No files uploaded yet.</div>
+    </div>
 
     <!-- Status display: Feedback for user actions -->
     <div id="status">{{ status }}</div>
@@ -75,7 +96,7 @@
 
 <script>
 import { ref } from 'vue';
-import { uploadFile, subscribeToResults, searchLeaderboard } from '../services/api';
+import { uploadFile, subscribeToResults, searchLeaderboard, getMyUploads } from '../services/api';
 
 export default {
   name: 'MainContent',
@@ -92,26 +113,61 @@ export default {
     const fileInput = ref(null);
     const uploadResults = ref(null);
     const searchResults = ref(null);
+    const myFiles = ref(null);
+    const myFilesError = ref(null);
 
     /**
-     * Switches between upload and search modes, resetting relevant state.
-     * @param {string} newMode - 'upload' or 'search'
+     * Switches between upload, search, and myfiles modes, resetting relevant state.
+     * @param {string} newMode - 'upload', 'search', or 'myfiles'
      */
-    const setMode = (newMode) => {
+    const setMode = async (newMode) => {
       mode.value = newMode;
+      status.value = 'Ready...';
+      uploadResults.value = null;
+      searchResults.value = null;
+      myFiles.value = null;
+      myFilesError.value = null;
+
       if (newMode === 'upload') {
         description.value = 'Upload a text file to analyze word frequency.';
         status.value = 'Ready to upload...';
-        searchResults.value = null;
-      } else {
+      } else if (newMode === 'search') {
         description.value = 'Search for a word to see its leaderboard (top 10 files by count).';
         status.value = 'Ready to search...';
-        uploadResults.value = null;
+      } else if (newMode === 'myfiles') {
+        description.value = 'View your uploaded files.';
+        await fetchMyFiles();
       }
     };
 
     const updateStatus = (message) => {
       status.value = message;
+    };
+
+    /**
+     * Fetches the user's uploaded files and deduplicates by s3Filename.
+     */
+    const fetchMyFiles = async () => {
+      try {
+        const uploads = await getMyUploads(updateStatus);
+        // Deduplicate by s3Filename, keeping one record per file
+        const uniqueFiles = [];
+        const seen = new Set();
+        for (const upload of uploads) {
+          if (!seen.has(upload.s3Filename)) {
+            seen.add(upload.s3Filename);
+            uniqueFiles.push({
+              s3Filename: upload.s3Filename,
+              originalFilename: upload.originalFilename,
+              uploadDate: upload.uploadDate,
+            });
+          }
+        }
+        // Sort by uploadDate (most recent first)
+        myFiles.value = uniqueFiles.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+      } catch (error) {
+        myFilesError.value = error.message || 'Failed to fetch your files.';
+      }
     };
 
     /**
@@ -164,6 +220,8 @@ export default {
       fileInput,
       uploadResults,
       searchResults,
+      myFiles,
+      myFilesError,
       setMode,
       handleUpload,
       handleSearch,
@@ -216,7 +274,8 @@ input[type="text"] {
 }
 
 .upload-table,
-.leaderboard-table {
+.leaderboard-table,
+.myfiles-table {
   border-collapse: collapse;
   margin: 10px auto;
   background-color: var(--background-form);
@@ -258,5 +317,11 @@ th {
 .dimmed {
   pointer-events: none;
   opacity: 0.5;
+}
+
+.error-message {
+  color: red;
+  font-size: 1em;
+  text-align: center;
 }
 </style>

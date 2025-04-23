@@ -1,5 +1,5 @@
 import { generateClient } from '@aws-amplify/api';
-import { APPSYNC_ENDPOINT, WS_ENDPOINT, generatePresignedUrlQuery, subscriptionQuery, getTopWordCountsQuery } from './config';
+import { APPSYNC_ENDPOINT, WS_ENDPOINT, generatePresignedUrlQuery, subscriptionQuery, getTopWordCountsQuery, getMyUploadsQuery } from './config';
 
 // Create a GraphQL client with the endpoint
 const client = generateClient({
@@ -104,6 +104,28 @@ export async function searchLeaderboard(word, updateStatus) {
     } catch (error) {
         updateStatus('Error: Check console for details');
         console.error('SearchLeaderboard error:', error);
+        throw error;
+    }
+}
+
+export async function getMyUploads(updateStatus) {
+    updateStatus('Fetching your uploads...');
+    try {
+        const response = await client.graphql({
+            query: getMyUploadsQuery,
+            authMode: 'userPool', // Use AMAZON_COGNITO_USER_POOLS for getMyUploads
+        });
+
+        console.log('getMyUploads response:', response);
+
+        if (response.errors) {
+            throw new Error(`GraphQL errors: ${JSON.stringify(response.errors)}`);
+        }
+
+        return response.data.getMyUploads;
+    } catch (error) {
+        updateStatus('Error: Check console for details');
+        console.error('getMyUploads error:', error);
         throw error;
     }
 }
