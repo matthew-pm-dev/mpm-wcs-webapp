@@ -1,0 +1,30 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+      {
+          "Effect": "Allow",
+          "Action": [
+              "dynamodb:BatchWriteItem"
+          ],
+          "Resource": "arn:aws:dynamodb:us-east-1:050752652297:table/WordCountTable"
+      },
+      {
+          "Effect": "Allow",
+          "Action": [
+              "sqs:ReceiveMessage",
+              "sqs:DeleteMessage",
+              "sqs:GetQueueAttributes"
+          ],
+          "Resource": "arn:aws:sqs:us-east-1:050752652297:WordCountWriteQueue"
+      },
+      {
+          "Effect": "Allow",
+          "Action": [
+              "logs:CreateLogGroup",
+              "logs:CreateLogStream",
+              "logs:PutLogEvents"
+          ],
+          "Resource": "arn:aws:logs:us-east-1:050752652297:log-group:/aws/lambda/lambda-word-count-database-writer:*"
+      }
+  ]
+}

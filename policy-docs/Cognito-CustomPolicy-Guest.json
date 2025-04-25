@@ -1,0 +1,14 @@
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Effect": "Allow",
+			"Action": "appsync:GraphQL",
+			"Resource": [
+				"arn:aws:appsync:us-east-1:050752652297:apis/fvfilqunmrboxjglotpae23qbu/types/Query/fields/getTopWordCounts",
+				"arn:aws:appsync:us-east-1:050752652297:apis/fvfilqunmrboxjglotpae23qbu/types/Query/fields/generatePresignedUrl",
+				"arn:aws:appsync:us-east-1:050752652297:apis/fvfilqunmrboxjglotpae23qbu/types/Subscription/fields/onProcessingComplete"
+			]
+		}
+	]
+}

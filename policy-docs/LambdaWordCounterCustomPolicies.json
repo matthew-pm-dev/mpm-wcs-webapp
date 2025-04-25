@@ -1,0 +1,23 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "S3Access",
+            "Effect": "Allow",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::mpm-bucket-wordcount-document-store/uploads/*"
+        },
+        {
+            "Sid": "AppSyncAccess",
+            "Effect": "Allow",
+            "Action": "appsync:GraphQL",
+            "Resource": "arn:aws:appsync:us-east-1:050752652297:apis/fvfilqunmrboxjglotpae23qbu/types/Mutation/fields/completeProcessing"
+        },
+        {
+            "Sid": "SQSAccess",
+            "Effect": "Allow",
+            "Action": "sqs:SendMessage",
+            "Resource": "arn:aws:sqs:us-east-1:050752652297:WordCountWriteQueue"
+        }
+    ]
+}

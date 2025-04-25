@@ -1,0 +1,18 @@
+#if($ctx.error)
+    $util.error($ctx.error.message, $ctx.error.type)
+#end
+#if(!$ctx.result || !$ctx.result.items || $ctx.result.items.isEmpty())
+    $util.toJson([])
+#else
+    #set($entries = [])
+    #foreach($item in $ctx.result.items)
+        #set($entry = {})
+        #set($entry.word = $item.Word)
+        #set($entry.count = $item.Count)
+        #set($entry.originalFilename = $item.OriginalFilename)
+        #set($entry.username = $util.defaultIfNullOrBlank($item.Username, "anonymous"))
+        #set($entry.uploadDate = $item.UploadDate)
+        #set($bool = $entries.add($entry))
+    #end
+    $util.toJson($entries)
+#end

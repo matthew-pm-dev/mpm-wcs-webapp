@@ -1,2 +1,14 @@
-dist/
-node_modules/
+**.zip
+
+# Exclude working documents
+backups
+test-documents
+notes
+
+# Exclude nodejs builds and dependencies
+static/dist
+static/node_modules
+
+# Exclude lambda dependencies
+app/*/*/
+!app/*/*

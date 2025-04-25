@@ -1,0 +1,13 @@
+{
+    "version": "2018-05-29",
+    "operation": "Query",
+    "index": "WordCountIndex",
+    "query": {
+        "expression": "Word = :word",
+        "expressionValues": {
+            ":word": $util.dynamodb.toDynamoDBJson($ctx.args.word)
+        }
+    },
+    "scanIndexForward": false,
+    "limit": $ctx.args.limit
+}

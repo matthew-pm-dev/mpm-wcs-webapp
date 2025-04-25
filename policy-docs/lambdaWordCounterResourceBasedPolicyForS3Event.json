@@ -1,0 +1,8 @@
+{
+    "StringEquals": {
+      "AWS:SourceAccount": "050752652297"
+    },
+    "ArnLike": {
+      "AWS:SourceArn": "arn:aws:s3:::mpm-bucket-wordcount-document-store"
+    }
+  }

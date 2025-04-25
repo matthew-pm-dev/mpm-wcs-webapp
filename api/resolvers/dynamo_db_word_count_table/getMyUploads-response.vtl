@@ -1,0 +1,14 @@
+#if($ctx.error)
+    $util.error($ctx.error.message, $ctx.error.type)
+#end
+#set($uploads = [])
+#foreach($item in $ctx.result.items)
+    #set($entry = {})
+    #set($entry.s3Filename = $item.UUID)
+    #set($entry.originalFilename = $item.OriginalFilename)
+    #set($entry.word = $item.Word)
+    #set($entry.count = $item.Count)
+    #set($entry.uploadDate = $item.UploadDate)
+    #set($bool = $uploads.add($entry))
+#end
+$util.toJson($uploads)

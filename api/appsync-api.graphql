@@ -1,0 +1,63 @@
+type LeaderboardEntry {
+	word: String!
+	count: Int!
+	originalFilename: String!
+	username: String!
+	uploadDate: String!
+}
+
+type PresignedUrlResponse {
+	presignedUrl: String
+	error: String
+}
+
+type ProcessingResult {
+	s3Filename: String!
+	originalFilename: String!
+	frequentWords: [WordCount!]!
+}
+
+type UploadHistory @aws_cognito_user_pools {
+	s3Filename: String!
+	originalFilename: String!
+	word: String!
+	count: Int!
+	uploadDate: String!
+}
+
+type WordCount {
+	word: String!
+	count: Int!
+}
+
+input WordCountInput {
+	word: String!
+	count: Int!
+}
+
+type Mutation {
+    completeProcessing(s3Filename: String!, originalFilename: String!, frequentWords: [WordCountInput!]!): ProcessingResult
+}
+
+type Query {
+	generatePresignedUrl(
+		key: String!,
+		contentType: String!,
+		originalFilename: String!,
+		username: String!
+	): PresignedUrlResponse
+	getTopWordCounts(word: String!, limit: Int!): [LeaderboardEntry]
+	getMyUploads: [UploadHistory]
+		@aws_cognito_user_pools
+}
+
+type Subscription {
+	onProcessingComplete(s3Filename: String!): ProcessingResult
+		@aws_subscribe(mutations: ["completeProcessing"])
+}
+
+schema {
+	query: Query
+	mutation: Mutation
+	subscription: Subscription
+}

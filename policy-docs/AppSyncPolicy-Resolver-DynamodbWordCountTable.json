@@ -1,0 +1,13 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": "dynamodb:Query",
+            "Resource": [
+                "arn:aws:dynamodb:us-east-1:050752652297:table/WordCountTable",
+                "arn:aws:dynamodb:us-east-1:050752652297:table/WordCountTable/index/WordCountIndex"
+            ]
+        }
+    ]
+}

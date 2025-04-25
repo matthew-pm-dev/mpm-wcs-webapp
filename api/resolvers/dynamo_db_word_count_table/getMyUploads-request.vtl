@@ -1,0 +1,13 @@
+#if(!$ctx.identity.claims.username)
+    $util.error("User is not authenticated or username is missing", "Unauthorized")
+#end
+{
+    "version": "2018-05-29",
+    "operation": "Query",
+    "query": {
+        "expression": "ShardedUsername = :username",
+        "expressionValues": {
+            ":username": $util.dynamodb.toDynamoDBJson($ctx.identity.claims.username)
+        }
+    }
+}

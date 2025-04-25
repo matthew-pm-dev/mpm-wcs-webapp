@@ -1,0 +1,20 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "Service": "appsync.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole",
+            "Condition": {
+                "StringEquals": {
+                    "aws:SourceAccount": "050752652297"
+                },
+                "ArnEquals": {
+                    "aws:SourceArn": "arn:aws:appsync:us-east-1:050752652297:apis/fvfilqunmrboxjglotpae23qbu"
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,9 @@
+[
+    {
+        "AllowedHeaders": ["Authorization","Content-Type"],
+        "AllowedMethods": ["PUT"],
+        "AllowedOrigins": ["https://dfn8llu7ykk5b.cloudfront.net"],
+        "ExposeHeaders": [],
+        "MaxAgeSeconds": 3000
+    }
+]
